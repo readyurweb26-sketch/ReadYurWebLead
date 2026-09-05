@@ -287,14 +287,33 @@ async function saveSheetUrl(){
 function setSyncStatus(text){
   document.getElementById('sync-status').textContent = text;
 }
+// Maps dashboard field names to your sheet's column names
+// (Name, Contact, Lead, Work, Status) plus the extra tracker fields.
+function toSheetLead_(l){
+  const contact = [l.phone, l.social].filter(Boolean).join(' | ');
+  return {
+    id: l.id,
+    name: l.name,
+    contact: contact,
+    leadSource: l.source,   // -> "Lead" column
+    work: l.type,           // -> "Work" column
+    status: l.status,
+    location: l.location,
+    nextFollowup: l.nextFollowup,
+    notes: l.notes,
+    createdAt: l.createdAt
+  };
+}
+
 async function syncLead(action, payload){
   if(!sheetUrl) return; // sync is optional
   try{
     setSyncStatus('Syncing...');
-    await fetch(sheetUrl, {
-      method: 'POST',
-      body: JSON.stringify({ action, lead: payload, id: payload && payload.id })
-    });
+    if(action === 'delete'){
+      await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action, id: payload.id }) });
+    } else {
+      await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action, lead: toSheetLead_(payload) }) });
+    }
     setSyncStatus('Synced');
   }catch(e){
     setSyncStatus('Sync failed — check your Web App URL / deployment access');
@@ -307,14 +326,17 @@ async function pullFromSheet(){
     const res = await fetch(sheetUrl);
     const data = await res.json();
     if(data.ok && Array.isArray(data.leads)){
-      leads = data.leads.map(r => ({
-        id: String(r.ID||Date.now().toString(36)),
-        name: r.Name||'', type: r.Type||'Other', location: r.Location||'',
-        phone: r.Phone||'', social: r.Social||'', hasweb: r.HasWebsite||'no',
-        source: r.Source||'Other', status: r.Status||'new',
-        nextFollowup: r.NextFollowup ? String(r.NextFollowup).slice(0,10) : '',
-        notes: r.Notes||'', createdAt: r.CreatedAt || new Date().toISOString()
-      })).filter(l=>l.name);
+      leads = data.leads.map(r => {
+        const contactParts = String(r.Contact||'').split('|').map(s=>s.trim());
+        return {
+          id: String(r.ID||Date.now().toString(36)),
+          name: r.Name||'', type: r.Work||'Other', location: r.Location||'',
+          phone: contactParts[0]||'', social: contactParts[1]||'', hasweb: 'no',
+          source: r.Lead||'Other', status: r.Status||'new',
+          nextFollowup: r.NextFollowup ? String(r.NextFollowup).slice(0,10) : '',
+          notes: r.Notes||'', createdAt: r.CreatedAt || new Date().toISOString()
+        };
+      }).filter(l=>l.name);
       await saveLeads(false);
       renderLeads(); renderStats(); populateLeadPicker();
       setSyncStatus('Pulled ' + leads.length + ' leads from Sheet');
@@ -329,7 +351,7 @@ async function pushAllToSheet(){
   if(!sheetUrl){ showToast('Add your Sheet Web App URL first'); return; }
   try{
     setSyncStatus('Pushing all leads...');
-    await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action:'bulkSync', leads }) });
+    await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action:'bulkSync', leads: leads.map(toSheetLead_) }) });
     setSyncStatus('Pushed ' + leads.length + ' leads to Sheet');
   }catch(e){
     setSyncStatus('Push failed — check the Web App URL/deployment');
