@@ -328,6 +328,7 @@ async function saveSheetUrl(){
 async function refreshSheetList(keepSelection){
   if(!sheetUrl) return;
   try{
+    setSyncStatus('Loading sheet list...');
     const res = await fetch(sheetUrl + '?action=listSheets');
     const data = await res.json();
     const sel = document.getElementById('sheet-name-select');
@@ -335,8 +336,13 @@ async function refreshSheetList(keepSelection){
       sel.innerHTML = data.sheets.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
       const want = keepSelection ? sheetName : sheetName;
       if(data.sheets.includes(want)){ sel.value = want; } else { sel.value = data.sheets[0]; sheetName = data.sheets[0]; }
+      setSyncStatus('Found ' + data.sheets.length + ' sheet(s): ' + data.sheets.join(', '));
+    } else {
+      setSyncStatus('Sheet list request returned no sheets — check deployment');
     }
-  }catch(e){ /* non-fatal — dropdown just keeps its default */ }
+  }catch(e){
+    setSyncStatus('Could not reach Sheet (network/CORS blocked): ' + (e && e.message ? e.message : e));
+  }
 }
 function onSheetNameChange(){
   sheetName = document.getElementById('sheet-name-select').value;
