@@ -114,6 +114,12 @@
         <div><label>Web App URL</label><input id="sheet-url" placeholder="https://script.google.com/macros/s/XXXX/exec"></div>
         <div style="display:flex;align-items:flex-end;"><button class="btn gold" onclick="saveSheetUrl()">Save</button></div>
       </div>
+      <div class="form-grid" style="grid-template-columns:1fr auto;margin-top:8px;">
+        <div><label>Sheet / tab</label>
+          <select id="sheet-name-select" onchange="onSheetNameChange()"><option value="Leads">Leads</option></select>
+        </div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn ghost small" onclick="refreshSheetList()">Refresh list</button></div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
         <button class="btn ghost small" onclick="pullFromSheet()">Pull from Sheet</button>
         <button class="btn ghost small" onclick="pushAllToSheet()">Push all to Sheet</button>
@@ -266,27 +272,55 @@
 <script>
 const STORE_KEY = 'ryw_leads_v1';
 const SHEET_URL_KEY = 'ryw_sheet_url';
+const SHEET_NAME_KEY = 'ryw_sheet_name';
 // Hardcoded default — this is used until you paste a new URL here (or in the
 // dashboard box) and click Save. Refreshing, incognito, or a new browser
 // will NOT lose this; only editing this line or clicking Save with a new
 // URL changes it.
 const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbx66hubtyCf7XuNnDwPirTR5E_Xg3ZAk2U04pNlsmenWrgIx6JtpFk4S-02onY25gi-/exec';
+const DEFAULT_SHEET_NAME = 'Leads';
 let leads = [];
 let sheetUrl = '';
+let sheetName = DEFAULT_SHEET_NAME;
 
 // ---------- Google Sheet sync ----------
 async function loadSheetUrl(){
   try{
     sheetUrl = localStorage.getItem(SHEET_URL_KEY) || DEFAULT_SHEET_URL;
-  }catch(e){ sheetUrl = DEFAULT_SHEET_URL; }
+    sheetName = localStorage.getItem(SHEET_NAME_KEY) || DEFAULT_SHEET_NAME;
+  }catch(e){ sheetUrl = DEFAULT_SHEET_URL; sheetName = DEFAULT_SHEET_NAME; }
   document.getElementById('sheet-url').value = sheetUrl;
   setSyncStatus(sheetUrl ? 'Connected' : 'Not connected — paste your Web App URL above');
+  await refreshSheetList(true);
 }
 async function saveSheetUrl(){
   sheetUrl = document.getElementById('sheet-url').value.trim();
   try{ localStorage.setItem(SHEET_URL_KEY, sheetUrl); }catch(e){}
   setSyncStatus(sheetUrl ? 'Saved — click "Pull from Sheet" to load existing data' : 'Not connected');
   showToast('Sheet URL saved');
+  await refreshSheetList(true);
+}
+// Fetches every tab name in the spreadsheet (auto-picks up new sheets like "Lead2")
+// and fills the "Sheet / tab" dropdown. keepSelection=true tries to preserve the
+// currently chosen sheet name if it still exists in the list.
+async function refreshSheetList(keepSelection){
+  if(!sheetUrl) return;
+  try{
+    const res = await fetch(sheetUrl + '?action=listSheets');
+    const data = await res.json();
+    const sel = document.getElementById('sheet-name-select');
+    if(data.ok && Array.isArray(data.sheets) && data.sheets.length){
+      sel.innerHTML = data.sheets.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      const want = keepSelection ? sheetName : sheetName;
+      if(data.sheets.includes(want)){ sel.value = want; } else { sel.value = data.sheets[0]; sheetName = data.sheets[0]; }
+    }
+  }catch(e){ /* non-fatal — dropdown just keeps its default */ }
+}
+function onSheetNameChange(){
+  sheetName = document.getElementById('sheet-name-select').value;
+  try{ localStorage.setItem(SHEET_NAME_KEY, sheetName); }catch(e){}
+  showToast('Switched to sheet: ' + sheetName);
+  pullFromSheet();
 }
 function setSyncStatus(text){
   document.getElementById('sync-status').textContent = text;
@@ -314,9 +348,17 @@ async function syncLead(action, payload){
   try{
     setSyncStatus('Syncing...');
     if(action === 'delete'){
-      await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action, id: payload.id }) });
+      await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action, id: payload.id, sheetName }) });
     } else {
-      await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action, lead: toSheetLead_(payload) }) });
+      const res = await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action, lead: toSheetLead_(payload), sheetName }) });
+      const data = await res.json().catch(()=>null);
+      // Server may have matched an existing row by business name and kept
+      // that row's original ID — adopt it locally so future deletes/updates
+      // for this lead still hit the correct row.
+      if(data && data.ok && data.id && data.id !== payload.id){
+        const local = leads.find(x=>x.id===payload.id);
+        if(local){ local.id = data.id; saveLeads(); renderLeads(); populateLeadPicker(); }
+      }
     }
     setSyncStatus('Synced');
   }catch(e){
@@ -327,13 +369,13 @@ async function pullFromSheet(){
   if(!sheetUrl){ showToast('Add your Sheet Web App URL first'); return; }
   try{
     setSyncStatus('Pulling...');
-    const res = await fetch(sheetUrl);
+    const res = await fetch(sheetUrl + '?sheet=' + encodeURIComponent(sheetName));
     const data = await res.json();
     if(data.ok && Array.isArray(data.leads)){
       leads = data.leads.map(r => {
         const contactParts = String(r.Contact||'').split('|').map(s=>s.trim());
         return {
-          id: String(r.ID||Date.now().toString(36)),
+          id: String(r.ID||genId()),
           name: r.Name||'', type: r.Work||'Other', location: r.Location||'',
           phone: contactParts[0]||'', social: contactParts[1]||'', hasweb: 'no',
           source: r.Lead||'Other', status: r.Status||'new',
@@ -355,7 +397,7 @@ async function pushAllToSheet(){
   if(!sheetUrl){ showToast('Add your Sheet Web App URL first'); return; }
   try{
     setSyncStatus('Pushing all leads...');
-    await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action:'bulkSync', leads: leads.map(toSheetLead_) }) });
+    await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action:'bulkSync', leads: leads.map(toSheetLead_), sheetName }) });
     setSyncStatus('Pushed ' + leads.length + ' leads to Sheet');
   }catch(e){
     setSyncStatus('Push failed — check the Web App URL/deployment');
@@ -368,6 +410,16 @@ async function loadLeads(){
     const raw = localStorage.getItem(STORE_KEY);
     leads = raw ? JSON.parse(raw) : [];
   }catch(e){ leads = []; }
+  // Safeguard: older versions of this dashboard could generate duplicate
+  // IDs. If found, give the duplicates fresh unique IDs so status/delete
+  // actions always target the correct single row.
+  const seen = new Set();
+  let fixedDupes = false;
+  leads.forEach(l => {
+    if(seen.has(l.id)){ l.id = genId(); fixedDupes = true; }
+    seen.add(l.id);
+  });
+  if(fixedDupes) saveLeads();
   renderLeads(); renderStats(); populateLeadPicker();
 }
 async function saveLeads(){
@@ -384,13 +436,34 @@ document.getElementById('tabs').addEventListener('click', e=>{
   document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
 });
 
+// ---------- helpers: ID format + friendly date ----------
+function genId(){
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I/O to avoid confusion
+  let l = '';
+  for(let i=0;i<2;i++) l += letters[Math.floor(Math.random()*letters.length)];
+  let d = '';
+  for(let i=0;i<6;i++) d += Math.floor(Math.random()*10);
+  return l + d; // e.g. "RY482913"
+}
+function formatDT(date){
+  // "5 Sep 26, 9:40 pm"
+  const d = new Date(date);
+  const day = d.getDate();
+  const month = d.toLocaleString('en-US', { month: 'short' });
+  const year = String(d.getFullYear()).slice(-2);
+  let h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2,'0');
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12; if(h===0) h = 12;
+  return `${day} ${month} ${year}, ${h}:${m} ${ampm}`;
+}
+
 // ---------- leads CRUD ----------
 function addLead(){
   const name = document.getElementById('f-name').value.trim();
   if(!name){ showToast('Business name is required'); return; }
-  const lead = {
-    id: Date.now().toString(36),
-    name,
+
+  const fields = {
     type: document.getElementById('f-type').value,
     location: document.getElementById('f-location').value.trim(),
     phone: document.getElementById('f-phone').value.trim(),
@@ -398,18 +471,37 @@ function addLead(){
     hasweb: document.getElementById('f-hasweb').value,
     source: document.getElementById('f-source').value,
     status: document.getElementById('f-status').value,
-    notes: document.getElementById('f-notes').value.trim(),
-    nextFollowup: '',
-    createdAt: new Date().toISOString()
+    notes: document.getElementById('f-notes').value.trim()
   };
-  leads.unshift(lead);
+
+  // If a lead with the same business name already exists, update it
+  // instead of creating a duplicate row.
+  const existing = leads.find(l => l.name.trim().toLowerCase() === name.toLowerCase());
+  let lead;
+  if(existing){
+    Object.assign(existing, fields);
+    existing.updatedAt = formatDT(new Date());
+    lead = existing;
+    showToast('Existing lead updated (same business name found)');
+  } else {
+    lead = {
+      id: genId(),
+      name,
+      ...fields,
+      nextFollowup: '',
+      createdAt: formatDT(new Date())
+    };
+    leads.unshift(lead);
+    showToast('Lead added');
+  }
+
   saveLeads(); renderLeads(); renderStats(); populateLeadPicker();
   syncLead('upsert', lead);
   ['f-name','f-location','f-phone','f-social','f-notes'].forEach(id=>document.getElementById(id).value='');
-  showToast('Lead added');
 }
 
 function updateStatus(id, status){
+
   const l = leads.find(x=>x.id===id); if(!l) return;
   l.status = status;
   if(status==='contacted' && !l.nextFollowup){
