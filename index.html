@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReadYurWeb — Lead System</title>
+<style>
+  :root{
+    --gold:#C9A668;
+    --gold-dark:#a3813f;
+    --ink:#181510;
+    --ink-soft:#4a4438;
+    --paper:#faf7f1;
+    --card:#ffffff;
+    --line:#e8e1d3;
+    --danger:#b3492f;
+    --good:#4c7a52;
+    --warn:#b8863b;
+    --radius:10px;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);}
+  .wrap{max-width:1120px;margin:0 auto;padding:24px 16px 80px;}
+  header.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .mark{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;}
+  .brand h1{font-size:18px;margin:0;letter-spacing:.2px;}
+  .brand span{font-size:12px;color:var(--ink-soft);}
+  nav.tabs{display:flex;gap:6px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px;}
+  nav.tabs button{border:none;background:transparent;padding:9px 16px;border-radius:999px;font-size:13px;cursor:pointer;color:var(--ink-soft);font-weight:600;transition:.18s;}
+  nav.tabs button.active{background:var(--ink);color:#fff;}
+  section{display:none;animation:fade .25s ease;}
+  section.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+  .card h2{margin:0 0 4px;font-size:16px;}
+  .card p.desc{margin:0 0 14px;font-size:13px;color:var(--ink-soft);}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:center;}
+  .stat b{display:block;font-size:22px;color:var(--gold-dark);}
+  .stat span{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px;}
+  input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;font-size:13px;background:#fff;color:var(--ink);font-family:inherit;}
+  textarea{resize:vertical;min-height:70px;}
+  label{font-size:11px;color:var(--ink-soft);display:block;margin-bottom:4px;font-weight:600;}
+  .btn{background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;}
+  .btn:hover{background:#000;}
+  .btn.gold{background:var(--gold-dark);}
+  .btn.gold:hover{background:#8a6c34;}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
+  .btn.small{padding:6px 10px;font-size:12px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{text-align:left;padding:8px 8px;border-bottom:2px solid var(--line);color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+  td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:hover td{background:#faf6ec;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;}
+  .b-new{background:#eef1e9;color:var(--good);}
+  .b-contacted{background:#fdf2e3;color:var(--warn);}
+  .b-followup{background:#fdeae3;color:var(--danger);}
+  .b-replied{background:#e6eef7;color:#2f5f8a;}
+  .b-converted{background:#e6f4e9;color:#2e7d43;}
+  .b-lost{background:#f1eeee;color:#8a8380;}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .empty{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:13px;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .search{max-width:220px;}
+  .pitch-output{background:#fbf9f4;border:1px dashed var(--gold);border-radius:8px;padding:14px;font-size:13px;white-space:pre-wrap;line-height:1.6;margin-top:12px;}
+  .copybtn{margin-top:8px;}
+  .seq-step{border-left:3px solid var(--gold);padding:10px 14px;margin-bottom:10px;background:#fbf9f4;border-radius:0 8px 8px 0;}
+  .seq-step h4{margin:0 0 6px;font-size:13px;}
+  .seq-step .when{font-size:11px;color:var(--gold-dark);font-weight:700;text-transform:uppercase;}
+  .cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;}
+  .cal-day{background:#fbf9f4;border:1px solid var(--line);border-radius:8px;padding:12px;}
+  .cal-day h4{margin:0 0 6px;font-size:12px;color:var(--gold-dark);text-transform:uppercase;letter-spacing:.4px;}
+  .cal-day p{margin:0 0 6px;font-size:12.5px;line-height:1.5;}
+  .cal-day .tag{font-size:10px;background:var(--ink);color:#fff;padding:2px 7px;border-radius:5px;display:inline-block;margin-bottom:6px;}
+  .modal-bg{position:fixed;inset:0;background:rgba(20,17,10,.5);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;}
+  .modal-bg.show{display:flex;}
+  .modal{background:#fff;border-radius:12px;padding:20px;max-width:480px;width:100%;max-height:88vh;overflow:auto;}
+  .modal h3{margin-top:0;font-size:15px;}
+  .close{float:right;cursor:pointer;font-size:18px;color:var(--ink-soft);}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:60;}
+  .toast.show{opacity:1;transform:translate(-50%,-6px);}
+  select.status-sel{padding:4px 6px;font-size:11px;border-radius:6px;}
+  @media(max-width:640px){ .stats{grid-template-columns:repeat(2,1fr);} table{font-size:11px;} th,td{padding:6px 5px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">RY</div>
+      <div>
+        <h1>ReadYurWeb Lead System</h1>
+        <span>Track leads · generate pitches · run outreach · plan content</span>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="leads" class="active">Leads</button>
+      <button data-tab="pitch">Pitch Generator</button>
+      <button data-tab="outreach">Outreach Scripts</button>
+      <button data-tab="calendar">Content Calendar</button>
+    </nav>
+  </header>
+
+  <!-- LEADS TAB -->
+  <section id="tab-leads" class="active">
+    <div class="card" id="sync-card">
+      <h2>Google Sheet Sync</h2>
+      <p class="desc">Paste your Apps Script Web App URL once (see code.gs setup notes). Leads will auto-sync to your sheet on every add/update/delete.</p>
+      <div class="form-grid" style="grid-template-columns:1fr auto;">
+        <div><label>Web App URL</label><input id="sheet-url" placeholder="https://script.google.com/macros/s/XXXX/exec"></div>
+        <div style="display:flex;align-items:flex-end;"><button class="btn gold" onclick="saveSheetUrl()">Save</button></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn ghost small" onclick="pullFromSheet()">Pull from Sheet</button>
+        <button class="btn ghost small" onclick="pushAllToSheet()">Push all to Sheet</button>
+        <span id="sync-status" style="font-size:12px;color:var(--ink-soft);align-self:center;"></span>
+      </div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="card">
+      <h2>Add a lead</h2>
+      <p class="desc">Add businesses you find on Google Maps, Instagram or Facebook.</p>
+      <div class="form-grid">
+        <div><label>Business name</label><input id="f-name" placeholder="e.g. Sharma Clinic"></div>
+        <div><label>Type</label>
+          <select id="f-type">
+            <option>Clinic</option><option>Hospital</option><option>School</option><option>Coaching Institute</option>
+            <option>Gym</option><option>Restaurant</option><option>Retailer</option><option>Salon</option><option>Other</option>
+          </select>
+        </div>
+        <div><label>Location</label><input id="f-location" placeholder="e.g. Kaliyaganj"></div>
+        <div><label>Phone / WhatsApp</label><input id="f-phone" placeholder="10-digit number"></div>
+        <div><label>Instagram / FB handle</label><input id="f-social" placeholder="@handle or page link"></div>
+        <div><label>Has website?</label>
+          <select id="f-hasweb"><option value="no">No</option><option value="weak">Weak / outdated</option><option value="yes">Yes (skip)</option></select>
+        </div>
+        <div><label>Source</label>
+          <select id="f-source"><option>Google Maps</option><option>Instagram</option><option>Facebook</option><option>Referral</option><option>Other</option></select>
+        </div>
+        <div><label>Status</label>
+          <select id="f-status"><option value="new">New</option><option value="contacted">Contacted</option></select>
+        </div>
+      </div>
+      <div><label>Notes</label><textarea id="f-notes" placeholder="Anything useful — owner name, best time to call, etc."></textarea></div>
+      <button class="btn gold" onclick="addLead()">+ Add Lead</button>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0;">All Leads</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input class="search" id="search" placeholder="Search name/location..." oninput="renderLeads()">
+          <select id="filter-status" onchange="renderLeads()">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="followup">Follow-up due</option>
+            <option value="replied">Replied</option>
+            <option value="converted">Converted</option>
+            <option value="lost">Lost</option>
+          </select>
+          <button class="btn ghost small" onclick="exportCSV()">Export CSV</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="lead-table">
+          <thead><tr>
+            <th>Business</th><th>Type</th><th>Location</th><th>Contact</th><th>Source</th><th>Status</th><th>Next Follow-up</th><th></th>
+          </tr></thead>
+          <tbody id="lead-body"></tbody>
+        </table>
+      </div>
+      <div id="empty-msg" class="empty" style="display:none;">No leads yet. Add your first one above, or search Google Maps / Instagram and log what you find.</div>
+    </div>
+  </section>
+
+  <!-- PITCH TAB -->
+  <section id="tab-pitch">
+    <div class="card">
+      <h2>Personalized Pitch Generator</h2>
+      <p class="desc">Pick a lead (or fill manually) and generate a WhatsApp/DM/Email pitch tailored to their business type.</p>
+      <div class="form-grid">
+        <div><label>Load from lead</label>
+          <select id="p-leadpick" onchange="loadLeadIntoPitch()"><option value="">— manual entry —</option></select>
+        </div>
+        <div><label>Business name</label><input id="p-name" placeholder="e.g. Sharma Clinic"></div>
+        <div><label>Type</label>
+          <select id="p-type">
+            <option>Clinic</option><option>Hospital</option><option>School</option><option>Coaching Institute</option>
+            <option>Gym</option><option>Restaurant</option><option>Retailer</option><option>Salon</option><option>Other</option>
+          </select>
+        </div>
+        <div><label>Location</label><input id="p-location" placeholder="e.g. Kaliyaganj"></div>
+        <div><label>Channel</label>
+          <select id="p-channel"><option>WhatsApp</option><option>Instagram DM</option><option>Email</option></select>
+        </div>
+        <div><label>Language</label>
+          <select id="p-lang"><option>Hinglish</option><option>Hindi</option><option>English</option><option>Bengali</option></select>
+        </div>
+      </div>
+      <button class="btn gold" onclick="generatePitch()">Generate Pitch</button>
+      <div id="pitch-out" class="pitch-output" style="display:none;"></div>
+      <button class="btn ghost small copybtn" id="copy-pitch-btn" style="display:none;" onclick="copyText('pitch-out')">Copy message</button>
+    </div>
+  </section>
+
+  <!-- OUTREACH TAB -->
+  <section id="tab-outreach">
+    <div class="card">
+      <h2>Cold Outreach Sequence</h2>
+      <p class="desc">A 4-touch follow-up sequence. Space contacts 2-3 days apart so you're persistent, not pushy.</p>
+      <div class="seq-step">
+        <div class="when">Day 1 — First contact</div>
+        <h4>Introduce + show the gap</h4>
+        <p>Use the Pitch Generator above for this one, tailored to the business.</p>
+      </div>
+      <div class="seq-step">
+        <div class="when">Day 3 — Follow-up 1 (no reply)</div>
+        <h4>Light nudge with value</h4>
+        <p id="seq-2"></p>
+      </div>
+      <div class="seq-step">
+        <div class="when">Day 6 — Follow-up 2 (still no reply)</div>
+        <h4>Social proof + urgency-free reminder</h4>
+        <p id="seq-3"></p>
+      </div>
+      <div class="seq-step">
+        <div class="when">Day 10 — Final message</div>
+        <h4>Door open, no pressure</h4>
+        <p id="seq-4"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Reply Handling — quick replies</h2>
+      <div id="quick-replies"></div>
+    </div>
+  </section>
+
+  <!-- CALENDAR TAB -->
+  <section id="tab-calendar">
+    <div class="card">
+      <h2>4-Week Content Calendar</h2>
+      <p class="desc">For Instagram/Facebook — builds trust so leads recognize ReadYurWeb before you even message them.</p>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h3 id="modal-title"></h3>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE_KEY = 'ryw_leads_v1';
+const SHEET_URL_KEY = 'ryw_sheet_url';
+let leads = [];
+let sheetUrl = '';
+
+// ---------- Google Sheet sync ----------
+async function loadSheetUrl(){
+  try{
+    const r = await window.storage.get(SHEET_URL_KEY);
+    sheetUrl = r && r.value ? r.value : '';
+  }catch(e){ sheetUrl = ''; }
+  document.getElementById('sheet-url').value = sheetUrl;
+  setSyncStatus(sheetUrl ? 'Connected' : 'Not connected — paste your Web App URL above');
+}
+async function saveSheetUrl(){
+  sheetUrl = document.getElementById('sheet-url').value.trim();
+  try{ await window.storage.set(SHEET_URL_KEY, sheetUrl); }catch(e){}
+  setSyncStatus(sheetUrl ? 'Saved — click "Pull from Sheet" to load existing data' : 'Not connected');
+  showToast('Sheet URL saved');
+}
+function setSyncStatus(text){
+  document.getElementById('sync-status').textContent = text;
+}
+async function syncLead(action, payload){
+  if(!sheetUrl) return; // sync is optional
+  try{
+    setSyncStatus('Syncing...');
+    await fetch(sheetUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action, lead: payload, id: payload && payload.id })
+    });
+    setSyncStatus('Synced');
+  }catch(e){
+    setSyncStatus('Sync failed — check your Web App URL / deployment access');
+  }
+}
+async function pullFromSheet(){
+  if(!sheetUrl){ showToast('Add your Sheet Web App URL first'); return; }
+  try{
+    setSyncStatus('Pulling...');
+    const res = await fetch(sheetUrl);
+    const data = await res.json();
+    if(data.ok && Array.isArray(data.leads)){
+      leads = data.leads.map(r => ({
+        id: String(r.ID||Date.now().toString(36)),
+        name: r.Name||'', type: r.Type||'Other', location: r.Location||'',
+        phone: r.Phone||'', social: r.Social||'', hasweb: r.HasWebsite||'no',
+        source: r.Source||'Other', status: r.Status||'new',
+        nextFollowup: r.NextFollowup ? String(r.NextFollowup).slice(0,10) : '',
+        notes: r.Notes||'', createdAt: r.CreatedAt || new Date().toISOString()
+      })).filter(l=>l.name);
+      await saveLeads(false);
+      renderLeads(); renderStats(); populateLeadPicker();
+      setSyncStatus('Pulled ' + leads.length + ' leads from Sheet');
+    } else {
+      setSyncStatus('Pull failed — check the Web App URL/deployment');
+    }
+  }catch(e){
+    setSyncStatus('Pull failed — check the Web App URL/deployment');
+  }
+}
+async function pushAllToSheet(){
+  if(!sheetUrl){ showToast('Add your Sheet Web App URL first'); return; }
+  try{
+    setSyncStatus('Pushing all leads...');
+    await fetch(sheetUrl, { method:'POST', body: JSON.stringify({ action:'bulkSync', leads }) });
+    setSyncStatus('Pushed ' + leads.length + ' leads to Sheet');
+  }catch(e){
+    setSyncStatus('Push failed — check the Web App URL/deployment');
+  }
+}
+
+// ---------- storage ----------
+async function loadLeads(){
+  try{
+    const r = await window.storage.get(STORE_KEY);
+    leads = r && r.value ? JSON.parse(r.value) : [];
+  }catch(e){ leads = []; }
+  renderLeads(); renderStats(); populateLeadPicker();
+}
+async function saveLeads(){
+  try{ await window.storage.set(STORE_KEY, JSON.stringify(leads)); }
+  catch(e){ showToast('Save failed — data kept only in this session'); }
+}
+
+// ---------- tabs ----------
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('button'); if(!btn) return;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+});
+
+// ---------- leads CRUD ----------
+function addLead(){
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ showToast('Business name is required'); return; }
+  const lead = {
+    id: Date.now().toString(36),
+    name,
+    type: document.getElementById('f-type').value,
+    location: document.getElementById('f-location').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    social: document.getElementById('f-social').value.trim(),
+    hasweb: document.getElementById('f-hasweb').value,
+    source: document.getElementById('f-source').value,
+    status: document.getElementById('f-status').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    nextFollowup: '',
+    createdAt: new Date().toISOString()
+  };
+  leads.unshift(lead);
+  saveLeads(); renderLeads(); renderStats(); populateLeadPicker();
+  syncLead('upsert', lead);
+  ['f-name','f-location','f-phone','f-social','f-notes'].forEach(id=>document.getElementById(id).value='');
+  showToast('Lead added');
+}
+
+function updateStatus(id, status){
+  const l = leads.find(x=>x.id===id); if(!l) return;
+  l.status = status;
+  if(status==='contacted' && !l.nextFollowup){
+    const d = new Date(); d.setDate(d.getDate()+3);
+    l.nextFollowup = d.toISOString().slice(0,10);
+  }
+  saveLeads(); renderLeads(); renderStats();
+  syncLead('upsert', l);
+}
+function updateFollowup(id, val){
+  const l = leads.find(x=>x.id===id); if(!l) return;
+  l.nextFollowup = val; saveLeads(); renderStats();
+  syncLead('upsert', l);
+}
+function deleteLead(id){
+  if(!confirm('Delete this lead? This cannot be undone.')) return;
+  leads = leads.filter(x=>x.id!==id);
+  saveLeads(); renderLeads(); renderStats(); populateLeadPicker();
+  syncLead('delete', { id });
+}
+
+function statusBadge(l){
+  const today = new Date().toISOString().slice(0,10);
+  let s = l.status, label = s;
+  if(s==='contacted' && l.nextFollowup && l.nextFollowup<=today){ s='followup'; label='Follow-up due'; }
+  const map = {new:'New', contacted:'Contacted', followup:'Follow-up due', replied:'Replied', converted:'Converted', lost:'Lost'};
+  label = map[s] || s;
+  return '<span class="badge b-'+s+'">'+label+'</span>';
+}
+
+function renderLeads(){
+  const body = document.getElementById('lead-body');
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  const filt = document.getElementById('filter-status').value;
+  const today = new Date().toISOString().slice(0,10);
+  let list = leads.filter(l=>{
+    const matchesQ = !q || (l.name+l.location).toLowerCase().includes(q);
+    const effStatus = (l.status==='contacted' && l.nextFollowup && l.nextFollowup<=today) ? 'followup' : l.status;
+    const matchesF = !filt || effStatus===filt;
+    return matchesQ && matchesF;
+  });
+  body.innerHTML = '';
+  document.getElementById('empty-msg').style.display = list.length ? 'none':'block';
+  list.forEach(l=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${esc(l.name)}</b>${l.notes? '<br><span style="color:#8a8073;font-size:11px;">'+esc(l.notes).slice(0,60)+'</span>':''}</td>
+      <td>${esc(l.type)}</td>
+      <td>${esc(l.location)||'—'}</td>
+      <td>${l.phone?esc(l.phone):''}${l.social?'<br>'+esc(l.social):''}${(!l.phone&&!l.social)?'—':''}</td>
+      <td>${esc(l.source)}</td>
+      <td>
+        ${statusBadge(l)}<br>
+        <select class="status-sel" onchange="updateStatus('${l.id}', this.value)">
+          <option value="new" ${l.status==='new'?'selected':''}>New</option>
+          <option value="contacted" ${l.status==='contacted'?'selected':''}>Contacted</option>
+          <option value="replied" ${l.status==='replied'?'selected':''}>Replied</option>
+          <option value="converted" ${l.status==='converted'?'selected':''}>Converted</option>
+          <option value="lost" ${l.status==='lost'?'selected':''}>Lost</option>
+        </select>
+      </td>
+      <td><input type="date" value="${l.nextFollowup||''}" onchange="updateFollowup('${l.id}', this.value)" style="font-size:11px;padding:5px;"></td>
+      <td class="row-actions">
+        <button class="btn ghost small" onclick="openPitchFor('${l.id}')">Pitch</button>
+        <button class="btn ghost small" onclick="deleteLead('${l.id}')">Delete</button>
+      </td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+function renderStats(){
+  const today = new Date().toISOString().slice(0,10);
+  const total = leads.length;
+  const dueFollowup = leads.filter(l=>l.status==='contacted' && l.nextFollowup && l.nextFollowup<=today).length;
+  const replied = leads.filter(l=>l.status==='replied').length;
+  const converted = leads.filter(l=>l.status==='converted').length;
+  const rate = total? Math.round((converted/total)*100) : 0;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><b>${total}</b><span>Total Leads</span></div>
+    <div class="stat"><b>${dueFollowup}</b><span>Follow-ups Due</span></div>
+    <div class="stat"><b>${replied}</b><span>Replied</span></div>
+    <div class="stat"><b>${converted}</b><span>Converted</span></div>
+    <div class="stat"><b>${rate}%</b><span>Conversion Rate</span></div>
+  `;
+}
+
+function populateLeadPicker(){
+  const sel = document.getElementById('p-leadpick');
+  sel.innerHTML = '<option value="">— manual entry —</option>' +
+    leads.map(l=>`<option value="${l.id}">${esc(l.name)} (${esc(l.type)})</option>`).join('');
+}
+function loadLeadIntoPitch(){
+  const id = document.getElementById('p-leadpick').value;
+  const l = leads.find(x=>x.id===id);
+  if(!l) return;
+  document.getElementById('p-name').value = l.name;
+  document.getElementById('p-type').value = l.type;
+  document.getElementById('p-location').value = l.location;
+}
+function openPitchFor(id){
+  document.querySelector('#tabs button[data-tab="pitch"]').click();
+  document.getElementById('p-leadpick').value = id;
+  loadLeadIntoPitch();
+}
+
+function exportCSV(){
+  if(!leads.length){ showToast('No leads to export'); return; }
+  const headers = ['Name','Type','Location','Phone','Social','HasWebsite','Source','Status','NextFollowup','Notes'];
+  const rows = leads.map(l=>[l.name,l.type,l.location,l.phone,l.social,l.hasweb,l.source,l.status,l.nextFollowup,l.notes]
+    .map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  const csv = headers.join(',')+'\n'+rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='readyurweb-leads.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ---------- pitch generator ----------
+const HOOKS = {
+  Clinic: 'log ilaaj se pehle Google pe clinic search karte hain',
+  Hospital: 'emergency mein bhi log pehle Google check karte hain',
+  School: 'parents admission se pehle school online dhundte hain',
+  'Coaching Institute': 'students result/reviews Google pe check karte hain',
+  Gym: 'log join karne se pehle Insta/Google pe check karte hain',
+  Restaurant: 'log table book karne se pehle Google Maps check karte hain',
+  Retailer: 'customers kharidne se pehle products online dekhna chahte hain',
+  Salon: 'log booking se pehle reviews online dekhte hain',
+  Other: 'aajkal log business choose karne se pehle Google search karte hain'
+};
+
+const HOOKS_BN = {
+  Clinic: 'মানুষ ইলাজের আগে গুগলে ক্লিনিক খোঁজে',
+  Hospital: 'জরুরি অবস্থাতেও মানুষ প্রথমে গুগলে খোঁজে',
+  School: 'অভিভাবকরা ভর্তির আগে স্কুল অনলাইনে খোঁজেন',
+  'Coaching Institute': 'ছাত্রছাত্রীরা রেজাল্ট/রিভিউ গুগলে দেখে',
+  Gym: 'জিমে জয়েন করার আগে মানুষ Insta/গুগলে চেক করে',
+  Restaurant: 'টেবিল বুকিংয়ের আগে মানুষ Google Maps দেখে',
+  Retailer: 'কেনার আগে গ্রাহকরা পণ্য অনলাইনে দেখতে চান',
+  Salon: 'বুকিংয়ের আগে মানুষ রিভিউ অনলাইনে দেখে',
+  Other: 'আজকাল ব্যবসা বেছে নেওয়ার আগে মানুষ গুগলে খোঁজে'
+};
+
+function generatePitch(){
+  const name = document.getElementById('p-name').value.trim() || '[Business Name]';
+  const type = document.getElementById('p-type').value;
+  const loc = document.getElementById('p-location').value.trim();
+  const channel = document.getElementById('p-channel').value;
+  const lang = document.getElementById('p-lang').value;
+  const hook = HOOKS[type] || HOOKS.Other;
+
+  let msg = '';
+  if(lang === 'English'){
+    msg = `Hi! Noticed ${name}${loc?' in '+loc:''} doesn't have a proper website — and ${hook}.\n\nI'm from ReadYurWeb, we build simple, fast websites for businesses like yours. Want to see a quick sample?`;
+  } else if(lang === 'Hindi'){
+    msg = `नमस्ते! ${name}${loc?' ('+loc+')':''} की अभी proper website नहीं दिखी — ${hook}।\n\nमैं ReadYurWeb से हूं, आपके जैसे businesses के लिए तेज़, सिंपल वेबसाइट बनाते हैं। एक sample दिखाऊं?`;
+  } else if(lang === 'Bengali'){
+    const hookBn = HOOKS_BN[type] || HOOKS_BN.Other;
+    msg = `নমস্কার! ${name}${loc?' ('+loc+')':''}-এর এখন প্রপার ওয়েবসাইট নেই — ${hookBn}।\n\nআমি ReadYurWeb থেকে বলছি, আপনার মতো ব্যবসার জন্য দ্রুত, সহজ ওয়েবসাইট বানাই। একটা স্যাম্পল দেখাই?`;
+  } else {
+    msg = `Namaste! ${name}${loc?' ('+loc+')':''} ki abhi proper website nahi dikhi — ${hook}.\n\nMain ReadYurWeb se hoon, aapke jaise businesses ke liye fast, simple websites banate hain. Ek sample dikhaun?`;
+  }
+  if(channel === 'Email'){
+    msg = `Subject: A quick idea for ${name}'s online presence\n\n` + msg + `\n\n— ReadYurWeb\nreadyurweb26@gmail.com | +91 8317839389`;
+  }
+  const out = document.getElementById('pitch-out');
+  out.textContent = msg;
+  out.style.display = 'block';
+  document.getElementById('copy-pitch-btn').style.display = 'inline-block';
+}
+
+function copyText(id){
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(()=>showToast('Copied to clipboard'));
+}
+
+// ---------- outreach sequence text ----------
+function fillSequence(){
+  document.getElementById('seq-2').textContent =
+    "Hi, following up on my last message — no pressure at all! Just wanted to share: most businesses we've worked with saw more inquiries within the first month of going live. Happy to send 1-2 sample websites in your industry if useful.";
+  document.getElementById('seq-3').textContent =
+    "Hey! Sharing this in case it's useful — we recently built a site for a similar business and they started getting WhatsApp inquiries within a week of launch. If you'd like, I can send a free 2-min mockup of what your site could look like, no cost, no obligation.";
+  document.getElementById('seq-4').textContent =
+    "Last message from my side — I don't want to keep bothering you! If a website isn't a priority right now, totally understood. I'll leave my number here in case it's useful later: +91 8317839389 (ReadYurWeb). All the best for your business!";
+
+  document.getElementById('quick-replies').innerHTML = `
+    <div class="seq-step"><div class="when">If they ask "price kitna hai"</div><h4>Reply</h4>
+      <p>Depends on kitne pages aur features chahiye — starting packages affordable hain. Main aapko readyurweb.vercel.app pe pricing dikhata hoon, phir 5 min call pe exact quote de dunga based on aapki need.</p></div>
+    <div class="seq-step"><div class="when">If they say "sochna hai / busy hoon"</div><h4>Reply</h4>
+      <p>Bilkul, koi jaldi nahi hai! Main 5-6 din baad ek chhota follow-up bhej dunga. Tab tak agar koi sawaal ho toh yahin puch lena.</p></div>
+    <div class="seq-step"><div class="when">If they say "already website hai"</div><h4>Reply</h4>
+      <p>Great! Kya main ek quick free suggestion de sakta hoon ki current site mein kya improve ho sakta hai (loading speed, mobile view, ya Google pe rank)? Bina kisi obligation ke.</p></div>
+  `;
+}
+
+// ---------- content calendar ----------
+function fillCalendar(){
+  const weeks = [
+    {tag:'Week 1 · Trust', items:[
+      ['Mon','Before/after','Post a before-vs-after of a client website transformation (blur real client details if needed).'],
+      ['Wed','Explainer reel','"3 signs your business is losing customers because of no website" — 30 sec reel.'],
+      ['Fri','Client feature','Short testimonial/quote from a happy client, styled with your gold-tone branding.']
+    ]},
+    {tag:'Week 2 · Education', items:[
+      ['Mon','Myth-bust','"Website is only for big companies" — myth vs reality carousel post.'],
+      ['Wed','Behind the scenes','15-sec clip of you building/designing a site — builds credibility.'],
+      ['Fri','Local shoutout','Tag a local business you\'d love to work with (soft, non-pushy) — "Loved this place, would look even better online 👀".']
+    ]},
+    {tag:'Week 3 · Proof', items:[
+      ['Mon','Case study','1 real project — problem, what you built, result (inquiries/bookings up).'],
+      ['Wed','Pricing transparency','Simple graphic: "Starter / Growth / Premium" packages — builds trust, reduces DMs asking price.'],
+      ['Fri','FAQ reel','Answer common question: "How long does it take to build a website?"']
+    ]},
+    {tag:'Week 4 · Conversion', items:[
+      ['Mon','Limited offer','"Free 20-day changes on any site booked this month" — soft urgency.'],
+      ['Wed','Poll/engagement','Instagram poll: "Does your business have a website? Yes/No" — great for finding leads in comments.'],
+      ['Fri','Recap + CTA','Carousel recap of the month\'s work + "DM us for a free consultation" CTA.']
+    ]}
+  ];
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  weeks.forEach(w=>{
+    w.items.forEach(([day,title,desc])=>{
+      const div = document.createElement('div');
+      div.className='cal-day';
+      div.innerHTML = `<span class="tag">${w.tag} · ${day}</span><h4>${title}</h4><p>${desc}</p>`;
+      grid.appendChild(div);
+    });
+  });
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function closeModal(){ document.getElementById('modal-bg').classList.remove('show'); }
+
+// init
+loadLeads();
+loadSheetUrl();
+fillSequence();
+fillCalendar();
+</script>
+</body>
+</html>
