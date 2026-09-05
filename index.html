@@ -624,13 +624,13 @@ function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'
 
 // ---------- pitch generator ----------
 const HOOKS = {
-  Clinic: 'log ilaaj se pehle Google pe clinic search karte hain',
-  Hospital: 'emergency mein bhi log pehle Google check karte hain',
-  School: 'parents admission se pehle school online dhundte hain',
-  'Coaching Institute': 'students result/reviews Google pe check karte hain',
-  Gym: 'log join karne se pehle Insta/Google pe check karte hain',
+  Clinic: 'aajkal patients ilaaj se pehle Google pe clinics search karte hain',
+  Hospital: 'families emergency mein bhi sabse pehle Google pe check karte hain',
+  School: 'parents admission se pehle school ko online dhundte hain',
+  'Coaching Institute': 'students result aur reviews Google pe check karte hain',
+  Gym: 'log join karne se pehle Instagram/Google pe research karte hain',
   Restaurant: 'log table book karne se pehle Google Maps check karte hain',
-  Retailer: 'customers kharidne se pehle products online dekhna chahte hain',
+  Retailer: 'customers kharidne se pehle products online dekhna pasand karte hain',
   Salon: 'log booking se pehle reviews online dekhte hain',
   Other: 'aajkal log business choose karne se pehle Google search karte hain'
 };
@@ -657,17 +657,17 @@ function generatePitch(){
 
   let msg = '';
   if(lang === 'English'){
-    msg = `Hi! Noticed ${name}${loc?' in '+loc:''} doesn't have a proper website — and ${hook}.\n\nI'm from ReadYurWeb, we build simple, fast websites for businesses like yours. Want to see a quick sample?`;
+    msg = `Hello! I came across ${name}${loc?' in '+loc:''} — ${hook}.\n\nI'm from ReadYurWeb, we design clean, professional websites for businesses like yours. You can see our work here: readyurweb.vercel.app\n\nHappy to share a free sample if you're interested.`;
   } else if(lang === 'Hindi'){
-    msg = `नमस्ते! ${name}${loc?' ('+loc+')':''} की अभी proper website नहीं दिखी — ${hook}।\n\nमैं ReadYurWeb से हूं, आपके जैसे businesses के लिए तेज़, सिंपल वेबसाइट बनाते हैं। एक sample दिखाऊं?`;
+    msg = `नमस्ते! ${name}${loc?' ('+loc+')':''} के बारे में जानकर अच्छा लगा — ${hook}।\n\nमैं ReadYurWeb से हूं, हम आपके जैसे businesses के लिए प्रोफेशनल वेबसाइट बनाते हैं। हमारा काम यहां देख सकते हैं: readyurweb.vercel.app\n\nअगर रुचि हो तो एक फ्री सैंपल भेज सकता हूं।`;
   } else if(lang === 'Bengali'){
     const hookBn = HOOKS_BN[type] || HOOKS_BN.Other;
-    msg = `নমস্কার! ${name}${loc?' ('+loc+')':''}-এর এখন প্রপার ওয়েবসাইট নেই — ${hookBn}।\n\nআমি ReadYurWeb থেকে বলছি, আপনার মতো ব্যবসার জন্য দ্রুত, সহজ ওয়েবসাইট বানাই। একটা স্যাম্পল দেখাই?`;
+    msg = `নমস্কার! ${name}${loc?' ('+loc+')':''}-এর কথা জেনে ভালো লাগলো — ${hookBn}।\n\nআমি ReadYurWeb থেকে বলছি, আমরা আপনার মতো ব্যবসার জন্য প্রফেশনাল ওয়েবসাইট তৈরি করি। আমাদের কাজ দেখতে পারেন: readyurweb.vercel.app\n\nআগ্রহ থাকলে একটা ফ্রি স্যাম্পল পাঠাতে পারি।`;
   } else {
-    msg = `Namaste! ${name}${loc?' ('+loc+')':''} ki abhi proper website nahi dikhi — ${hook}.\n\nMain ReadYurWeb se hoon, aapke jaise businesses ke liye fast, simple websites banate hain. Ek sample dikhaun?`;
+    msg = `Namaste! ${name}${loc?' ('+loc+')':''} ke baare mein jaan kar accha laga — ${hook}.\n\nMain ReadYurWeb se hoon, hum aapke jaise businesses ke liye professional websites banate hain. Hamara kaam yahan dekh sakte hain: readyurweb.vercel.app\n\nAgar interest ho to ek free sample bhej sakta hoon.`;
   }
   if(channel === 'Email'){
-    msg = `Subject: A quick idea for ${name}'s online presence\n\n` + msg + `\n\n— ReadYurWeb\nreadyurweb26@gmail.com | +91 8317839389`;
+    msg = `Subject: Website design for ${name}\n\n` + msg + `\n\nBest regards,\nReadYurWeb\nreadyurweb.vercel.app | readyurweb26@gmail.com | +91 8317839389`;
   }
   const out = document.getElementById('pitch-out');
   out.textContent = msg;
