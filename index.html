@@ -380,7 +380,7 @@ async function pullFromSheet(){
           phone: contactParts[0]||'', social: contactParts[1]||'', hasweb: 'no',
           source: r.Lead||'Other', status: r.Status||'new',
           nextFollowup: r.NextFollowup ? String(r.NextFollowup).slice(0,10) : '',
-          notes: r.Notes||'', createdAt: r.CreatedAt || new Date().toISOString()
+          notes: r.Notes||'', createdAt: r.CreatedAt || formatDT(new Date())
         };
       }).filter(l=>l.name);
       await saveLeads(false);
