@@ -266,14 +266,19 @@
 <script>
 const STORE_KEY = 'ryw_leads_v1';
 const SHEET_URL_KEY = 'ryw_sheet_url';
+// Hardcoded default — this is used until you paste a new URL here (or in the
+// dashboard box) and click Save. Refreshing, incognito, or a new browser
+// will NOT lose this; only editing this line or clicking Save with a new
+// URL changes it.
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbx66hubtyCf7XuNnDwPirTR5E_Xg3ZAk2U04pNlsmenWrgIx6JtpFk4S-02onY25gi-/exec';
 let leads = [];
 let sheetUrl = '';
 
 // ---------- Google Sheet sync ----------
 async function loadSheetUrl(){
   try{
-    sheetUrl = localStorage.getItem(SHEET_URL_KEY) || '';
-  }catch(e){ sheetUrl = ''; }
+    sheetUrl = localStorage.getItem(SHEET_URL_KEY) || DEFAULT_SHEET_URL;
+  }catch(e){ sheetUrl = DEFAULT_SHEET_URL; }
   document.getElementById('sheet-url').value = sheetUrl;
   setSyncStatus(sheetUrl ? 'Connected' : 'Not connected — paste your Web App URL above');
 }
