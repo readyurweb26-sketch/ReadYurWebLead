@@ -272,15 +272,14 @@ let sheetUrl = '';
 // ---------- Google Sheet sync ----------
 async function loadSheetUrl(){
   try{
-    const r = await window.storage.get(SHEET_URL_KEY);
-    sheetUrl = r && r.value ? r.value : '';
+    sheetUrl = localStorage.getItem(SHEET_URL_KEY) || '';
   }catch(e){ sheetUrl = ''; }
   document.getElementById('sheet-url').value = sheetUrl;
   setSyncStatus(sheetUrl ? 'Connected' : 'Not connected — paste your Web App URL above');
 }
 async function saveSheetUrl(){
   sheetUrl = document.getElementById('sheet-url').value.trim();
-  try{ await window.storage.set(SHEET_URL_KEY, sheetUrl); }catch(e){}
+  try{ localStorage.setItem(SHEET_URL_KEY, sheetUrl); }catch(e){}
   setSyncStatus(sheetUrl ? 'Saved — click "Pull from Sheet" to load existing data' : 'Not connected');
   showToast('Sheet URL saved');
 }
@@ -361,14 +360,14 @@ async function pushAllToSheet(){
 // ---------- storage ----------
 async function loadLeads(){
   try{
-    const r = await window.storage.get(STORE_KEY);
-    leads = r && r.value ? JSON.parse(r.value) : [];
+    const raw = localStorage.getItem(STORE_KEY);
+    leads = raw ? JSON.parse(raw) : [];
   }catch(e){ leads = []; }
   renderLeads(); renderStats(); populateLeadPicker();
 }
 async function saveLeads(){
-  try{ await window.storage.set(STORE_KEY, JSON.stringify(leads)); }
-  catch(e){ showToast('Save failed — data kept only in this session'); }
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(leads)); }
+  catch(e){ showToast('Local save failed — this browser may be blocking storage'); }
 }
 
 // ---------- tabs ----------
@@ -647,10 +646,13 @@ function showToast(msg){
 function closeModal(){ document.getElementById('modal-bg').classList.remove('show'); }
 
 // init
-loadLeads();
-loadSheetUrl();
-fillSequence();
-fillCalendar();
+(async function init(){
+  await loadLeads();
+  await loadSheetUrl();
+  if(sheetUrl){ await pullFromSheet(); }
+  fillSequence();
+  fillCalendar();
+})();
 </script>
 </body>
 </html>
